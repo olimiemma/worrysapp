@@ -1,0 +1,44 @@
+service: share-your-words
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    DYNAMODB_TABLE: UserWords
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:table/UserWords
+
+plugins:
+  - serverless-nextjs-plugin
+
+custom:
+  serverless-nextjs:
+    assetsBucketName: share-your-words-assets-${self:provider.stage}
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+functions:
+  app:
+    handler: serverless-nextjs-plugin.handler
+    events:
+      - http: ANY /
+      - http: ANY /{proxy+}
+#   Resources:
+#     UserWordsTable:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         TableName: UserWords
+#         AttributeDefinitions:
+#           - AttributeName: id
+#             AttributeType: S
+#         KeySchema:
+#           - AttributeName: id
+#             KeyType: HASH
+#         BillingMode: PAY_PER_REQUEST
